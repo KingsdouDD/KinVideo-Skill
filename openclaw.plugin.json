@@ -1,0 +1,49 @@
+{
+  "id": "kinvideo-tools",
+  "name": "KinVideo Tools",
+  "description": "HTML/CSS/JS 动画生成 MP4 视频的工具集：音频断点抽取、视频渲染、字幕注入、混音合成",
+  "version": "1.0.0",
+  "contracts": {
+    "tools": [
+      "audio_sentence_breakpoints",
+      "audio_silence_detect",
+      "tts_with_silence",
+      "video_render",
+      "subtitle_inject",
+      "scene_timing_inject",
+      "video_audio_mux",
+      "runtime_html_hook"
+    ]
+  },
+  "toolMetadata": {
+    "audio_sentence_breakpoints": {
+      "replaySafe": true
+    },
+    "audio_silence_detect": {
+      "replaySafe": true
+    },
+    "tts_with_silence": {
+      "replaySafe": false
+    },
+    "video_render": {
+      "replaySafe": false
+    },
+    "subtitle_inject": {
+      "replaySafe": true
+    },
+    "scene_timing_inject": {
+      "replaySafe": true
+    },
+    "video_audio_mux": {
+      "replaySafe": false
+    }
+  },
+  "activation": {
+    "onStartup": false
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

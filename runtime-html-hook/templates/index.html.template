@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KinVideo — Runtime HTML</title>
+  <style>
+    /* ============================================================
+       基础样式（AI 可修改，但不要动 #stage / [data-slot-idx] 结构）
+       ============================================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, sans-serif;
+    }
+
+    /* ─── Runtime 保留：舞台容器（禁止删除/改结构）────────── */
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── Visual Slot（AI 在这里填内容）────────────────────
+       Runtime 保留 [data-slot-idx] 属性，AI 可以自由设计内部 */
+    [data-slot-idx] {
+      position: absolute;
+      inset: 0;
+      display: none;          /* 默认隐藏，由 runtime-core.js 控制显示 */
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    [data-slot-idx][data-active="true"] {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* ─── 字幕层（Runtime 保留）─────────────────────────── */
+    #subtitle-layer {
+      position: fixed;
+      bottom: 8%;
+      left: 0; right: 0;
+      text-align: center;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .subtitle-text {
+      display: inline-block;
+      padding: 8px 24px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: clamp(16px, 3vw, 28px);
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── 占位符：AI 视觉样式 ──────────────────────────── */
+    /* KINVIDEO:AI_STYLES */
+    <style>
+    /* AI 在这里写视觉样式，例如：
+       #slot-0 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+       .card { border-radius: 16px; padding: 32px; ... }
+    */
+  </style>
+</head>
+<body>
+
+  <!-- Runtime 保留：舞台 -->
+  <div id="stage">
+    <!--
+      ╔══════════════════════════════════════════════════════╗
+      ║  Runtime 生成的 Visual Slot（数量 = Segment 数量）   ║
+      ║  AI 在每个 #slot-N 里自由设计视觉内容               ║
+      ║  禁止修改 [data-slot-idx] 和 #stage 结构            ║
+      ╚══════════════════════════════════════════════════════╝
+      KINVIDEO:SLOTS
+    -->
+  </div>
+
+  <!-- Runtime 保留：字幕层 -->
+  <div id="subtitle-layer">
+    <span class="subtitle-text" id="subtitle-text"></span>
+  </div>
+
+  <!-- Runtime 保留：runtime-core.js（禁止修改）-->
+  <!-- KINVIDEO:RUNTIME_CORE -->
+
+  <!-- AI 视觉层：visual-design.js -->
+  <!-- KINVIDEO:VISUAL_JS -->
+
+  <!-- Runtime 保留：字幕渲染逻辑 -->
+  <script>
+  (function () {
+    var _subText = document.getElementById("subtitle-text");
+    function _updateSubtitle(t) {
+      var sub = (window.SUBTITLE_TIMINGS || []).find(
+        function(s) { return t >= s.start && t < s.end; }
+      );
+      if (_subText) {
+        _subText.textContent = sub ? sub.text : "";
+      }
+    }
+    // 拦截 _renderFrame，追加字幕更新
+    var _origRender = window._renderFrame;
+    window._renderFrame = function (t) {
+      if (_origRender) _origRender(t);
+      _updateSubtitle(t);
+    };
+  })();
+  </script>
+
+</body>
+</html>

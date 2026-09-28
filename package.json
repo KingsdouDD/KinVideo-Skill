@@ -1,0 +1,45 @@
+{
+  "name": "kinvideo-tools",
+  "version": "1.0.0",
+  "description": "AI 视频生成工具集（音频断点、视频渲染、字幕注入、混音）",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24-beta.2",
+      "pluginSdkVersion": "2026.3.24-beta.2"
+    }
+  },
+  "scripts": {
+    "test": "echo \"no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0",
+    "typebox": "^1.1.39"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24-beta.2"
+  },
+  "keywords": [
+    "openclaw",
+    "video",
+    "html",
+    "ffmpeg",
+    "tts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
