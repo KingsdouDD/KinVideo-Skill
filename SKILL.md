@@ -9,9 +9,9 @@
 
 - 动作：**必须**在 skill 目录下的 output 子目录里创建项目文件夹，后续所有文件统一存在这里
   ```bash
-  mkdir -p ~/.openclaw/workspace/skills/html-video/output/<项目名>
+  mkdir -p ~/.openclaw/workspace/skills/kinvideo-tools/output/<项目名>
   ```
-  - 示例：`~/.openclaw/workspace/skills/html-video/output/ai-review-leak/`
+  - 示例：`~/.openclaw/workspace/skills/kinvideo-tools/output/ai-review-leak/`
   - **所有后续工具产出和生成文件全部存于此目录**
   - 后续所有路径引用都以这个目录为根目录
 
