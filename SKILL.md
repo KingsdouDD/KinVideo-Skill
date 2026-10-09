@@ -63,11 +63,48 @@ with open('narration.txt', 'w') as f:
 - 输出：
   - `video-runtime.json` — Segment 时间/文本数据（Runtime 契约）
   - `runtime-core.js` — 时间控制基础设施（AI 禁止修改）
-  - `index.html` — 固定 DOM 骨架 + N 个 Visual Slot
+  - `index.html` — 固定 DOM 骨架 + N 个 Visual Slot（初版，slot 数量为 segment 数量）
 
 ---
 
+### Step 3.6 · 合并 Visual Slot（按语义）【可选步骤】
+
+> 当每句对应的画面元素太少、留白过多时，按语义将相邻多个 audio segment 合并为同一个 visual slot，画面在整段时间内保持稳定。
+
+**前置条件：** Step 3.5 已生成 `video-runtime.json`
+
+**操作方式：** 读 `video-runtime.json`，AI 自己判断相邻句子语义是否相近，将语义相近的若干相邻 segment 的 `visualSlot.containerSelector` 改为同一个 slot 名。
+
+**示例（12 segment 合并为 4 个 visual slot）：**
+
+```json
+segments[0-2].visualSlot.containerSelector → "#slot-0"   // 语义相近：海面日出、朝阳升起、光线变化
+segments[3-5].visualSlot.containerSelector → "#slot-1"   // 语义相近：天空渐变、云层流动
+segments[6-8].visualSlot.containerSelector → "#slot-2"   // 语义相近：落日余晖、色彩绚烂
+segments[9-11].visualSlot.containerSelector → "#slot-3"   // 语义相近：夜晚降临、收尾
+```
+
+**效果：**
+- `_renderAt(t)` 在同一组 segment 的时间范围内始终返回同一个 slot，画面不切
+- 字幕和音频仍按原句断点走（SUBTITLE_TIMINGS 不变）
+- HTML 只需生成 4 个 slot，元素更丰富、留白更少
+
+**步骤：**
+1. 读 `video-runtime.json`，遍历所有 segment 的句子内容
+2. AI 自行判断语义相近的相邻句，合并为若干个 visual slot（无绝对标准，模型凭语义判断）
+3. 用 `edit` 工具修改 JSON 中对应 segment 的 `containerSelector` 值
+4. 合并后 `requiredSelectors` 会自动缩减，HTML 骨架的 slot 数量相应减少
+
+**注意：**
+- 语义相近即内容相关性高，不是机械地每 N 句合并一次
+- 如果判断所有句子语义都各不相同，则不合并，跳过此步骤
+- 合并后需确认 `runtime-core.js` 和 `index.html` 的 slot 数量与合并后的 JSON 一致
+- 只修改视频slot，音频的千万不要动
+---
+
 ### Step 4a · 设计 HTML 骨架（无 CSS）【核心步骤】
+
+> **【铁律】HTML 骨架 + CSS 类名设计完成后、写文件之前，先停下来问用户布局和排版，确认后再写文件。**
 
 > **【铁律】必须先读 `video-runtime.json`，读了才能设计**
 > - 每个 Slot 里的元素很少，先读一遍数据，设计时不用再读
@@ -92,65 +129,19 @@ with open('narration.txt', 'w') as f:
 
 ---
 
-### Step 4b · 设计 CSS 类和动画【核心步骤】
+### Step 4b · 读 Visual Profile + 写 CSS【核心步骤】
 
-> **【铁律】必须按顺序读：配色规范 → CSS 原子库 → HTML 骨架**
-> - 读配色规范确定颜色体系
-> - 读审美技能，选需要的动画类型
-   - 配色/字体/布局/动画铁律（必读）
-   - **必须在设计 HTML 之前读完**
-> - 再读 Step 4a 生成的 HTML（看有哪些类名），对应生成样式
-> - **禁止在回复中输出 CSS**，用 `write` 工具一次性写完整 CSS 文件
+**【铁律】按顺序读，不跳步，不自己发明排版**
 
-**步骤：**
-1. 读取 `kin-visual-index.md`（轻量索引，先读这个找行号）
-2. 根据索引行号，用 `read(path="kin-visual.md", offset=X, limit=Y)` 读取对应的 CSS 原子库内容
-3. 问用户需要什么配色和动画风格，确定用哪个场景模板（Hero / Magazine / Bento / Split / Timeline / Data / Cinematic 等）
-4. 读取 Step 4a 生成的 `index.html`，列出所有暴露的类名
-5. 根据类名生成 `visual.css`（或 `visual-style.css`），对应写样式 + 动画
-6. 写好的 CSS 文件存到 Step 1 创建的项目目录里
+1. 读 `visual-profiles/index.md`，判断内容类型，读取对应 profile MD
+2. 按 profile MD 确定：字体 / 配色 / 排版骨架 / 动画原子 / easing 参数
+3. 读 `kin-visual-index.md`，按索引行号读 `kin-visual.md` 中对应 CSS 原子
+4. 读 Step 4a 的 `index.html`，列出所有暴露的类名
+5. 按 profile 规范生成 `visual.css`，存到 Step 1 项目目录
 
-**注意：**
-- Step 4a 里预埋的 CSS 引用路径，Step 4b 必须对应生成同名文件
-- 如果 Step 4a 预埋了 `<link rel="stylesheet" href="visual.css" />`，Step 4b 就生成 `visual.css`
+Step 4a 预埋的 CSS 路径名，Step 4b 必须对应生成同名文件。
 
 ---
-
-### Step 4c · 渲染前验证 CSS 链接【必须检查】
-
-> **【铁律】每次渲染之前必须验证，CSS 链接错误会导致所有文字挤在左上角、动画不生效**
-
-**检查动作（exec）：**
-```bash
-grep -n "stylesheet\|visual.css\|visual-style.css" <项目目录>/index.html | head -5
-```
-
-**验证标准（同时满足才算通过）：**
-
-1. `<link rel="stylesheet" href="visual.css" />`（或 `visual-style.css`）**必须出现在 `<head>` 标签内部**，不是在 slot 内容里
-2. 链接路径与 Step 4b 实际生成的 CSS 文件名完全一致
-
-**正确示例：**
-```html
-<head>
-  <link rel="stylesheet" href="visual.css" />
-  ...
-</head>
-```
-
-**错误示例（CSS 跑进 HTML 内容里）：**
-```html
-<!-- 错误：link 标签出现在 body 里的 slot-content 中 -->
-<div class="slot-content">
-  <span class="c-tag">&lt;link</span>...href="visual.css".../>
-</div>
-```
-
-**如果验证失败：手动修复 `<head>` 中的 CSS 链接，再继续。**
-
----
-
-
 
 ### Step 5 · 渲染 + 混音（调工具）
 
